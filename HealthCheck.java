@@ -11,14 +11,23 @@ import java.net.CookieManager;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.http.Consts;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.impl.client.*;
 //import org.jsoup.Jsoup;
 //import org.jsoup.nodes.Document;
 //import org.jsoup.nodes.Element;
@@ -29,7 +38,7 @@ public class HealthCheck extends JFrame{
   public int pulseRate;
   public  String result;
 
-
+   public final String USER_AGENT = "Mozilla/5.0";
 
 
 
@@ -37,21 +46,18 @@ public class HealthCheck extends JFrame{
     public static void main(String[] args) {
 
 
-
-
-
-       // SysCheck(150);
-     //DiaCheck(100);
-     //PulseCheck(200);
+        // SysCheck(150);
+        //DiaCheck(100);
+        //PulseCheck(200);
         String csvFile = "*.csv";
         String line = "";
         String cvsSplitBy = ",";
-
+         String USER_AGENT = "Mozilla/5.0";
 
         try {
             try (BufferedReader br =
-            new BufferedReader(new FileReader ("resources/testing.csv"))){
-                while ((line=br.readLine())!=null){
+                         new BufferedReader(new FileReader("resources/testing.csv"))) {
+                while ((line = br.readLine()) != null) {
                     List<String> items = Arrays.asList(line.split(","));
                     System.out.println(line);
                     for (int i = 0; i < items.size(); i++) {
@@ -60,37 +66,47 @@ public class HealthCheck extends JFrame{
                     SysCheck((Integer.parseInt(items.get(0))));
                     DiaCheck((Integer.parseInt(items.get(1))));
                     PulseCheck((Integer.parseInt(items.get(2))));
+                    sendTXT();
                 }
 
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+    }
      public static void sendTXT() {
 
-        String url = "https://selfsolve.apple.com/wcResults.do";
+        String url = "https://dev.telstra.com/messaging-api/apis/post/messages/sms";
 
-        HttpClient client = HttpClientBuilder.create().build();
+        DefaultHttpClient client = new DefaultHttpClient();//DefaultHttpClient) HttpClientBuilder.create().build();
         HttpPost post = new HttpPost(url);
 
+
+        client.getCredentialsProvider().setCredentials(
+                new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
+                new UsernamePasswordCredentials("GbH96dXaq6h7x9EGejkA0aMXR0ozUKNX","2b0yoAjKmHpynD2A")
+        );
+
 // add header
-        post.setHeader("User-Agent", USER_AGENT);
-                "to": "",
-                "body": "",
-                "from": "",
-                "validity": 0,
-                "scheduledDelivery": 0,
-                "notifyURL": "",
-                "replyRequest": false
-        List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
-        urlParameters.add(new BasicNameValuePair("sn", "C02G8416DRJM"));
-        urlParameters.add(new BasicNameValuePair("cn", ""));
-        urlParameters.add(new BasicNameValuePair("locale", ""));
-        urlParameters.add(new BasicNameValuePair("caller", ""));
-        urlParameters.add(new BasicNameValuePair("num", "12345"));
+
+
+       // List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+        //urlParameters.add(new BasicNameValuePair("sn", "C02G8416DRJM"));
+        //urlParameters.add(new BasicNameValuePair("cn", ""));
+        //urlParameters.add(new BasicNameValuePair("locale", ""));
+        //urlParameters.add(new BasicNameValuePair("caller", ""));
+        //urlParameters.add(new BasicNameValuePair("num", "12345"));
    try {
-       post.setEntity(new UrlEncodedFormEntity(urlParameters));
+       post.setHeader("User-Agent","Mozilla/5.0" );
+       ContentType playinAsciiContentType=ContentType.create("text/plain", Consts.ASCII);
+       HttpEntity entity= MultipartEntityBuilder.create()
+               .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+               .addPart("to",new StringBody("+61401388767"))
+               .addPart("from",new StringBody("+61472880143"))
+               .addPart("body",new StringBody("hello world"))
+
+               .build();
+      // post.setEntity(new UrlEncodedFormEntity(urlParameters));
 
        HttpResponse response = client.execute(post);
        System.out.println("Response Code : "
@@ -103,6 +119,7 @@ public class HealthCheck extends JFrame{
        String line = "";
        while ((line = rd.readLine()) != null) {
            result.append(line);
+           //System.out.println(line);
        }
    }catch (Exception e){
        System.out.println(e);
@@ -111,7 +128,7 @@ public class HealthCheck extends JFrame{
 
 
 
-    }
+
     public  static void SysCheck(int x){
 
 
